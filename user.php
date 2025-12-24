@@ -1,53 +1,64 @@
 <?php
-header("Content-Type: application/json");
-require_once './config.php';
-$method = $_SERVER['REQUEST_METHOD'];
-$input = json_decode(file_get_contents('php://input'), true);
+require_once './db.php';
 
-switch ($method) {
-    case 'GET':
-        handleGet($pdo);
-        break;
-    case 'POST':
-        handlePost($pdo, $input);
-        break;
-    case 'PUT':
-        handlePut($pdo, $input);
-        break;
-    case 'DELETE':
-        handleDelete($pdo, $input);
-        break;
-    default:
-        echo json_encode(['message' => 'Invalid request method']);
-        break;
-}
+class user
+{
+    function __construct() {
+      
+        header("Content-Type: application/json");
+    require_once './config.php';
+    $method = $_SERVER['REQUEST_METHOD'];
+    $input = json_decode(file_get_contents('php://input'), true);
 
-function handleGet($pdo) {
-    $sql = "SELECT * FROM userInfo";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute();
-    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    echo json_encode($result);
-}
+    switch ($method) {
+        case 'GET':
+          $this->handleGet();
+            break;
+        case 'POST':
+            $this->handlePost($input);
+            break;
+        case 'PUT':
+            $this->handlePut( $input);
+            break;
+        case 'DELETE':
+            $this->handleDelete( $input);
+            break;
+        default:
+            echo json_encode(['message' => 'Invalid request method']);
+            break;
+    }
+    }
+   
 
-function handlePost($pdo, $input) {
-    $sql = "INSERT INTO userInfo (name, email,city) VALUES (:name, :email,:city)";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute(['name' => $input['name'], 'email' => $input['email'],'city'=> $input['city']]);
-    echo json_encode(['message' => 'User created successfully']);
-}
+    public function handleGet() {
+        $sql = "SELECT * FROM userInfo";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode($result);
+    }
 
-function handlePut($pdo, $input) {
-    $sql = "UPDATE users SET name = :name, email = :email,city = :city WHERE id = :id";
-    $stmt = $pdo->prepare($sql);
-     $stmt->execute(['name' => $input['name'], 'email' => $input['email'],'city'=> $input['city']]);
-    echo json_encode(['message' => 'User updated successfully']);
-}
+    function handlePost( $input) {
+        $sql = "INSERT INTO userInfo (name, email,city) VALUES (:name, :email,:city)";
+        $params = ['name' => $input['name'], 'email' => $input['email'],'city'=> $input['city']];
+       $db = new DBConfig();
+      $data = $db->executeQuery($sql,$params);
+      echo json_encode([error,'message' => 'User updated successfully']);
+    }
 
-function handleDelete($pdo, $input) {
-    $sql = "DELETE FROM users WHERE id = :id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute(['id' => $input['id']]);
-    echo json_encode(['message' => 'User deleted successfully']);
+    function handlePut( $input) {
+        $sql = "UPDATE users SET name = :name, email = :email,city = :city WHERE id = :id";
+        $params=['name' => $input['name'], 'email' => $input['email'],'city'=> $input['city'],'id'=>$input['id']];
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        echo json_encode(['message' => 'User updated successfully']);
+    }
+
+    function handleDelete( $input) {
+        $sql = "DELETE FROM users WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['id' => $input['id']]);
+        echo json_encode(['message' => 'User deleted successfully']);
+    }
 }
 ?>
