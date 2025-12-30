@@ -63,7 +63,7 @@ class user implements curdOperations
            
         try {
             $valid= $this->userValidation($input);
-print_r($valid);
+
         
             if($valid['error']){
              throw new Exception($valid['message']);
