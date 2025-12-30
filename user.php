@@ -1,7 +1,15 @@
 <?php
 require_once './db.php';
 
-class user
+interface curdOperations{
+    public function handleGet();
+    public function handlePost(array $input);
+    public function handlePut(array $input);
+    public function handleDelete(array $input);
+    function userValidation(array $input);
+}
+
+class user implements curdOperations
 {
     function __construct() {
       
@@ -47,18 +55,63 @@ class user
     }
 
     function handlePut( $input) {
-        $sql = "UPDATE users SET name = :name, email = :email,city = :city WHERE id = :id";
+        
+        $sql = "UPDATE userInfo SET name = :name, email = :email,city = :city WHERE id = :id";
         $params=['name' => $input['name'], 'email' => $input['email'],'city'=> $input['city'],'id'=>$input['id']];
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute();
-        echo json_encode(['message' => 'User updated successfully']);
+       
+           
+           
+        try {
+            $valid= $this->userValidation($input);
+print_r($valid);
+        
+            if($valid['error']){
+             throw new Exception($valid['message']);
+            }
+  
+        $db = new DBConfig();
+        $data = $db->executeQuery($sql,$params);
+       
+        echo json_encode([
+        "success" => true,
+        "error" => [
+            "code" => '200',
+            "message" =>'User updated successfully'
+        ]
+    ]);
+        } catch (\Throwable $e) {
+          
+            $code = $e->getCode() ?: 500; // Use exception code or default to 500
+    http_response_code($code);
+    
+    echo json_encode([
+        "success" => false,
+        "error" => [
+            "code" => $code,
+            "message" => $e->getMessage()
+        ]
+    ]);
+        }
+       
     }
 
     function handleDelete( $input) {
-        $sql = "DELETE FROM users WHERE id = :id";
+        $sql = "DELETE FROM userInfo WHERE id = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute(['id' => $input['id']]);
         echo json_encode(['message' => 'User deleted successfully']);
+    }
+
+    function  userValidation($input){
+      
+        if(!filter_var( $input['email'],FILTER_VALIDATE_EMAIL) && $input['email'] === null || $input['email'] === ""){
+         return ['error'=>true,'message'=> 'email is not valid..!!'];
+        }elseif($input['name'] === null || $input['name'] === ""){
+       return ['error'=>true,'message'=> 'name is not valid..!!'];
+        }
+        else{
+             return ['error'=>false,'message'=> ''];
+        }
     }
 }
 ?>

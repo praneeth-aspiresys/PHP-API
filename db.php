@@ -20,7 +20,9 @@ public function executeQuery($query,$params){
   echo json_encode(['message' => 'User created successfully']);
     echo('DB connection success');
 } catch (PDOException $e) {
+     throw new Exception("Database connection failed", 500);
     die("Connection failed: " . $e->getMessage());
+    
 }
     
 }
